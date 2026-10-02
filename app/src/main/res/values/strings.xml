@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shortcut Menu</string>
+    <string name="service_description">Lets the accessibility shortcut turn your choice of screen reader or other accessibility service on or off. With no screen reader on, the menu speaks for itself: drag your finger to hear the choices, and lift it to choose.</string>
+
+    <string name="menu_title">Shortcut menu</string>
+    <string name="menu_intro">Shortcut menu. Drag your finger to hear the choices, then lift it to choose.</string>
+    <string name="menu_intro_empty">Shortcut menu has no services to offer. Choose them in its settings. Lift your finger to close.</string>
+    <string name="menu_intro_needs_permission">Shortcut menu cannot turn services on or off until it has permission. Its settings say how to grant it. Lift your finger to close.</string>
+    <string name="menu_needs_permission">Shortcut Menu cannot turn services on or off until it has permission. Its settings say how to grant it.</string>
+    <string name="menu_empty">No services are chosen for the menu. Choose them in Shortcut Menu settings.</string>
+    <string name="menu_close">Close</string>
+    <string name="menu_closed">Closed</string>
+    <!-- A service in the menu, and whether it is on. -->
+    <string name="entry_on">%1$s, on</string>
+    <string name="entry_off">%1$s, off</string>
+    <!-- Said after the menu turns a service on or off. -->
+    <string name="turned_on">%1$s on</string>
+    <string name="turned_off">%1$s off</string>
+
+    <string name="settings_intro">Shortcut Menu turns your choice of accessibility services on and off from the accessibility shortcut, such as holding both volume keys. With a screen reader on, the menu is a list that the screen reader reads. With none on, it speaks for itself: drag your finger to hear the choices, and lift it to choose. Turning a screen reader on turns any other screen reader off.</string>
+    <string name="settings_permission_heading">Permission</string>
+    <string name="settings_permission_granted">Granted. Shortcut Menu can turn services on and off.</string>
+    <string name="settings_permission_needed">Android only lets apps turn accessibility services on and off with a permission that you grant once, from a computer with adb, or with Shizuku. Run this command:</string>
+    <string name="settings_copy_command">Copy the command</string>
+    <string name="settings_copied">Copied</string>
+    <string name="settings_shortcut_heading">Shortcut</string>
+    <string name="settings_shortcut_help">In Accessibility settings, open Shortcut Menu and turn on its shortcut. Make Shortcut Menu the only feature on that shortcut. With more than one, Android asks which one to use, and that question is not spoken without a screen reader.</string>
+    <string name="settings_volume_keys">Volume key shortcut</string>
+    <string name="settings_button">Accessibility button</string>
+    <string name="settings_shortcut_unused">%1$s: not used.</string>
+    <string name="settings_shortcut_ready">%1$s: Shortcut Menu only. Ready.</string>
+    <string name="settings_shortcut_shared">%1$s: shared with other features, so Android asks which one to use: %2$s.</string>
+    <string name="settings_shortcut_other">%1$s: used by other features, not Shortcut Menu: %2$s.</string>
+    <string name="settings_open_accessibility">Open Accessibility settings</string>
+    <string name="settings_choices_heading">Services in the menu</string>
+    <string name="settings_choices_help">Choose which services the menu offers.</string>
+    <string name="settings_screen_reader">%1$s, screen reader</string>
+    <string name="settings_try_heading">Try it</string>
+    <string name="settings_try">Open the menu</string>
+</resources>
