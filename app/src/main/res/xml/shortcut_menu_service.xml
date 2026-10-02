@@ -2,11 +2,13 @@
 <!-- No flagRequestAccessibilityButton: Android takes a service that asks for the button off the
      shortcut whenever the service turns off, and this one turns off each time the menu closes.
      flagEnableAccessibilityVolume: the menu speaks at the accessibility volume, which the user keeps
-     up for their screen reader, instead of the media volume. -->
+     up for their screen reader, instead of the media volume.
+     flagRequestShortcutWarningDialogSpokenFeedback: Android speaks its question the first time the
+     volume key shortcut is used, for anyone who has not granted the permission that skips it. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeAnnouncement"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagEnableAccessibilityVolume"
+    android:accessibilityFlags="flagEnableAccessibilityVolume|flagRequestShortcutWarningDialogSpokenFeedback"
     android:canRetrieveWindowContent="false"
     android:description="@string/service_description"
     android:isAccessibilityTool="true"

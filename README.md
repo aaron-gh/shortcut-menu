@@ -5,7 +5,7 @@ Shortcut Menu lets the Android accessibility shortcut, such as holding both volu
 *   **With no screen reader on,** the menu speaks for itself. Drag your finger over the screen to hear each choice, such as "Backtalk, off", and lift your finger to choose it. The choices fill the screen, with **Close** at the bottom, so there is always one under your finger.
 *   **With a screen reader on,** the menu is a list of buttons that your screen reader reads.
 
-Turning a screen reader on turns any other screen reader off, so two never talk at once. Pressing the shortcut again while the menu is open closes it.
+Turning a screen reader on turns any other screen reader off, so two never talk at once. Services with the same name, such as Google's and Samsung's TalkBack, are told apart by their maker, such as "TalkBack (Samsung)". Pressing the shortcut again while the menu is open closes it.
 
 Without Shortcut Menu, a shortcut with more than one feature on it asks which one to use, and that question is not spoken when no screen reader is on.
 
@@ -32,7 +32,7 @@ Choosing a service changes Android's list of enabled accessibility services dire
 
 *   It needs Android 11 or later.
 *   Without the permission, the menu can only say that it needs it.
-*   The first time anyone uses the volume key shortcut, Android asks whether to use it, and that question is not spoken without a screen reader.
+*   The first time anyone uses the volume key shortcut, Android asks whether to use it. With the permission granted, Shortcut Menu marks that question as answered when you open its settings. Without it, Android speaks the question aloud.
 *   A quick tap with no screen reader on chooses whatever is under the finger, like on iPhone.
 
 ## Build

@@ -63,6 +63,9 @@ class SettingsActivity : Activity() {
 
     heading(R.string.settings_shortcut_heading)
     paragraph(getString(R.string.settings_shortcut_help))
+    if (services.skipShortcutQuestion()) {
+      paragraph(getString(R.string.settings_question_skipped))
+    }
     paragraph(shortcutStatus(R.string.settings_volume_keys, KEY_VOLUME_SHORTCUT))
     paragraph(shortcutStatus(R.string.settings_button, KEY_BUTTON_SHORTCUT))
     button(R.string.settings_open_accessibility) {

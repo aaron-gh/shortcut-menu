@@ -29,20 +29,35 @@ class Services(private val context: Context) {
     context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
       PackageManager.PERMISSION_GRANTED
 
-  /** Every installed accessibility service but this one, sorted by name. */
+  /**
+   * Every installed accessibility service but this one, sorted by name. Services with the same
+   * name, such as Google's and Samsung's TalkBack, get their maker added.
+   */
   fun installed(): List<MenuEntry> {
     val enabled = enabled()
-    return accessibilityManager.installedAccessibilityServiceList
-      .map { info ->
+    val infos =
+      accessibilityManager.installedAccessibilityServiceList.filterNot {
+        ServiceList.normalize(componentOf(it)) == ServiceList.normalize(self)
+      }
+    val labels =
+      MenuLabels.distinct(
+        infos.map { info ->
+          MenuLabels.Service(
+            info.resolveInfo.loadLabel(context.packageManager).toString(),
+            info.resolveInfo.serviceInfo.packageName,
+          )
+        }
+      )
+    return infos
+      .mapIndexed { index, info ->
         val component = componentOf(info)
         MenuEntry(
           component = component,
-          label = info.resolveInfo.loadLabel(context.packageManager).toString(),
+          label = labels[index],
           on = ServiceList.contains(enabled, component),
           screenReader = isScreenReader(info),
         )
       }
-      .filterNot { ServiceList.normalize(it.component) == ServiceList.normalize(self) }
       .sortedBy { it.label.lowercase() }
   }
 
@@ -96,6 +111,27 @@ class Services(private val context: Context) {
   fun shortcutTargets(key: String): List<String> =
     ServiceList.parse(Settings.Secure.getString(context.contentResolver, key))
 
+  /**
+   * Marks Android's question the first time the volume key shortcut is used, "Use accessibility
+   * shortcut?", as answered, since nobody installs Shortcut Menu but to use the shortcut. Without a
+   * screen reader on, that question is a dialog that a blind user may not hear. Returns whether it
+   * is now marked.
+   */
+  fun skipShortcutQuestion(): Boolean {
+    val resolver = context.contentResolver
+    if (Settings.Secure.getInt(resolver, KEY_SHORTCUT_DIALOG_SHOWN, 0) == 1) {
+      return true
+    }
+    if (!canWrite()) {
+      return false
+    }
+    return try {
+      Settings.Secure.putInt(resolver, KEY_SHORTCUT_DIALOG_SHOWN, 1)
+    } catch (e: SecurityException) {
+      false
+    }
+  }
+
   /** The name of [component] if it is an installed service, or the component itself. */
   fun labelOf(component: String): String =
     installed().firstOrNull { ServiceList.normalize(it.component) == ServiceList.normalize(component) }
@@ -132,13 +168,20 @@ class Services(private val context: Context) {
   private companion object {
     const val PREFS = "shortcut_menu"
     const val KEY_CHOSEN = "chosen_services"
+    // Settings.Secure.ACCESSIBILITY_SHORTCUT_DIALOG_SHOWN, which the SDK hides.
+    const val KEY_SHORTCUT_DIALOG_SHOWN = "accessibility_shortcut_dialog_shown"
 
     fun componentOf(info: AccessibilityServiceInfo): String =
       ComponentName(info.resolveInfo.serviceInfo.packageName, info.resolveInfo.serviceInfo.name)
         .flattenToString()
 
-    /** A screen reader takes over touch, so two of them cannot run at once. */
+    /**
+     * A screen reader takes over touch, so two of them cannot run at once. TalkBack and its forks
+     * turn touch exploration on only while they run, so the capability to ask for it is what marks
+     * one that is off.
+     */
     fun isScreenReader(info: AccessibilityServiceInfo): Boolean =
-      info.flags and AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE != 0
+      info.capabilities and AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_TOUCH_EXPLORATION != 0 ||
+        info.flags and AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE != 0
   }
 }

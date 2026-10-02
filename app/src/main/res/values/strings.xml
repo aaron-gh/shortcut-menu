@@ -26,6 +26,7 @@
     <string name="settings_copied">Copied</string>
     <string name="settings_shortcut_heading">Shortcut</string>
     <string name="settings_shortcut_help">In Accessibility settings, open Shortcut Menu and turn on its shortcut. Make Shortcut Menu the only feature on that shortcut. With more than one, Android asks which one to use, and that question is not spoken without a screen reader.</string>
+    <string name="settings_question_skipped">Android\'s question the first time the volume key shortcut is used is marked as answered, so the shortcut works at once.</string>
     <string name="settings_volume_keys">Volume key shortcut</string>
     <string name="settings_button">Accessibility button</string>
     <string name="settings_shortcut_unused">%1$s: not used.</string>
