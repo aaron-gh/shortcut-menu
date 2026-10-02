@@ -11,7 +11,7 @@ Without Shortcut Menu, a shortcut with more than one feature on it asks which on
 
 ## Set up
 
-1.  Install the app.
+1.  Download `shortcut-menu.apk` from the [latest release](https://github.com/aaron-gh/shortcut-menu/releases/latest) and install it. Android asks you to allow installing apps from your browser or file manager the first time.
 2.  Grant it permission to turn accessibility services on and off. Android only allows this with a permission that you grant once, from a computer with adb:
 
     ```
@@ -40,3 +40,9 @@ Choosing a service changes Android's list of enabled accessibility services dire
 ```
 ./gradlew assembleDebug
 ```
+
+Each tag such as `v0.1` builds a release APK on GitHub, signed with the release key, and publishes it as a release.
+
+## License
+
+Shortcut Menu is licensed under the [Apache License 2.0](LICENSE).
