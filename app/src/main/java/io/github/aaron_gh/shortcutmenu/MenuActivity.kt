@@ -270,8 +270,6 @@ class MenuActivity : Activity() {
 
     private var current: WeakReference<MenuActivity>? = null
 
-    fun isOpen(): Boolean = current?.get()?.let { !it.finished } ?: false
-
     fun open(context: Context) {
       context.startActivity(
         Intent(context, MenuActivity::class.java)

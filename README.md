@@ -24,7 +24,7 @@ Without Shortcut Menu, a shortcut with more than one feature on it asks which on
 
 ## How it works
 
-The shortcut turns Shortcut Menu's accessibility service on, and the service opens the menu. When the menu closes, the service turns itself off, so the next press turns it on again. While the menu is open, the service is on, so another press reaches it as a click and closes the menu.
+The shortcut turns Shortcut Menu's accessibility service on, and the service opens the menu. When the menu closes, the service turns itself off, so the next press turns it on again. A press while the menu is open turns the service off, which closes the menu.
 
 Choosing a service changes Android's list of enabled accessibility services directly, so Android does not ask "Allow full control?" each time. The menu speaks with the phone's text-to-speech engine, at the accessibility volume.
 
