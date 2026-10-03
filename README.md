@@ -41,7 +41,7 @@ Choosing a service changes Android's list of enabled accessibility services dire
 ./gradlew assembleDebug
 ```
 
-Each tag such as `v0.1` builds a release APK on GitHub, signed with the release key, and publishes it as a release.
+Each tag such as `v0.1` builds a release APK on GitHub, signed with the release key, and publishes it as a release. Make it an annotated tag, since its message becomes the release notes: `git tag -a v0.3 -m "What changed"`.
 
 ## License
 

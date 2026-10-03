@@ -67,5 +67,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # The notes are the annotated tag's message, followed by the changes GitHub lists.
           gh release create "$GITHUB_REF_NAME" shortcut-menu.apk \
-            --title "Shortcut Menu ${GITHUB_REF_NAME#v}" --generate-notes
+            --title "Shortcut Menu ${GITHUB_REF_NAME#v}" --notes-from-tag --generate-notes
