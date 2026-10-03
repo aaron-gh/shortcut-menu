@@ -64,4 +64,25 @@ class ServiceListTest {
       ServiceList.toggle(listOf("fyi.quin.backtalk/com.google.android.marvin.talkback.TalkBackService", "io.github.aaron_gh.shortcutmenu/.ShortcutMenuService"), backtalk, self, readers),
     )
   }
+
+  @Test
+  fun switchingScreenReadersStopsTheOldOneFirst() {
+    val enabled = listOf(backtalk, selectToSpeak, self)
+    val after = ServiceList.toggle(enabled, talkback, self, readers)
+    assertEquals(listOf(backtalk), ServiceList.mustStopFirst(enabled, after, readers))
+  }
+
+  @Test
+  fun startingAScreenReaderWithNoneOnNeedsNoWait() {
+    val enabled = listOf(selectToSpeak, self)
+    val after = ServiceList.toggle(enabled, backtalk, self, readers)
+    assertEquals(emptyList<String>(), ServiceList.mustStopFirst(enabled, after, readers))
+  }
+
+  @Test
+  fun turningAScreenReaderOffNeedsNoWait() {
+    val enabled = listOf(backtalk, self)
+    val after = ServiceList.toggle(enabled, backtalk, self, readers)
+    assertEquals(emptyList<String>(), ServiceList.mustStopFirst(enabled, after, readers))
+  }
 }

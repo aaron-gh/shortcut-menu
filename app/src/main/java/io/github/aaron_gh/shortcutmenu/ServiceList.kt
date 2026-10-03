@@ -49,4 +49,21 @@ object ServiceList {
       if (normalize(target) in readers) result.filterNot { normalize(it) in readers } else result
     return kept + target
   }
+
+  /**
+   * The screen readers that must stop before [after] is written over [enabled]: those that are on
+   * now and will be off, when [after] turns another screen reader on. Android binds and unbinds the
+   * services in any order, and a screen reader that starts before the old one has stopped loses
+   * explore by touch when the old one lets go of it. Empty when nothing needs to wait.
+   */
+  fun mustStopFirst(enabled: List<String>, after: List<String>, screenReaders: Set<String>): List<String> {
+    val readers = screenReaders.map { normalize(it) }.toSet()
+    val afterSet = after.map { normalize(it) }.toSet()
+    val enabledSet = enabled.map { normalize(it) }.toSet()
+    val starting = afterSet.any { it in readers && it !in enabledSet }
+    if (!starting) {
+      return emptyList()
+    }
+    return enabled.filter { normalize(it) in readers && normalize(it) !in afterSet }
+  }
 }

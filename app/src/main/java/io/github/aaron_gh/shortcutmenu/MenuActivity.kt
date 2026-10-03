@@ -41,7 +41,8 @@ class MenuActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     current = WeakReference(this)
-    services = Services(this)
+    // The application context, since switching screen readers outlives this screen.
+    services = Services(applicationContext)
     entries = if (services.canWrite()) services.menuEntries() else emptyList()
     tts = TextToSpeech(this) { status -> onTtsInit(status) }
 
@@ -174,8 +175,11 @@ class MenuActivity : Activity() {
       return
     }
     finished = true
-    if (!services.toggle(entry)) {
-      services.turnOffSelf()
+    val services = services
+    services.toggle(entry) { allowed ->
+      if (!allowed) {
+        services.turnOffSelf()
+      }
     }
     finish()
   }

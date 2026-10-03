@@ -5,6 +5,9 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 
@@ -91,8 +94,53 @@ class Services(private val context: Context) {
     return components.any { ServiceList.normalize(it) in readers }
   }
 
-  /** Turns [entry] on or off, and this app's service off. Returns false if it is not allowed. */
-  fun toggle(entry: MenuEntry): Boolean = write(afterToggle(entry))
+  /**
+   * Turns [entry] on or off, and this app's service off, then calls [done] with whether it was
+   * allowed. When a screen reader turns on in place of another, the old one is turned off first,
+   * and the new one only once the old one has stopped and let go of explore by touch. This app's
+   * service stays on in between, so that the app keeps running.
+   */
+  fun toggle(entry: MenuEntry, done: (Boolean) -> Unit) {
+    val enabled = enabled()
+    val after = afterToggle(entry)
+    val stopFirst = ServiceList.mustStopFirst(enabled, after, screenReaders())
+    if (stopFirst.isEmpty()) {
+      done(write(after))
+      return
+    }
+    val stopping = stopFirst.map { ServiceList.normalize(it) }.toSet()
+    if (!write(enabled.filterNot { ServiceList.normalize(it) in stopping })) {
+      done(false)
+      return
+    }
+    waitUntilStopped(stopping) { done(write(afterToggle(entry))) }
+  }
+
+  /**
+   * Runs [then] once none of [components] is running and explore by touch is off, after a moment
+   * for the screen reader to finish letting go, or after [STOP_TIMEOUT_MS] in any case.
+   */
+  private fun waitUntilStopped(components: Set<String>, then: () -> Unit) {
+    val handler = Handler(Looper.getMainLooper())
+    val deadline = SystemClock.uptimeMillis() + STOP_TIMEOUT_MS
+    val check =
+      object : Runnable {
+        override fun run() {
+          val running =
+            accessibilityManager
+              .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+              .map { ServiceList.normalize(componentOf(it)) }
+          val stopped =
+            components.none { it in running } && !accessibilityManager.isTouchExplorationEnabled
+          if (stopped || SystemClock.uptimeMillis() >= deadline) {
+            handler.postDelayed(then, SETTLE_MS)
+          } else {
+            handler.postDelayed(this, POLL_MS)
+          }
+        }
+      }
+    handler.post(check)
+  }
 
   /** Turns this app's service off. */
   fun turnOffSelf() {
@@ -168,6 +216,9 @@ class Services(private val context: Context) {
   private companion object {
     const val PREFS = "shortcut_menu"
     const val KEY_CHOSEN = "chosen_services"
+    const val POLL_MS = 50L
+    const val SETTLE_MS = 250L
+    const val STOP_TIMEOUT_MS = 3000L
     // Settings.Secure.ACCESSIBILITY_SHORTCUT_DIALOG_SHOWN, which the SDK hides.
     const val KEY_SHORTCUT_DIALOG_SHOWN = "accessibility_shortcut_dialog_shown"
 
