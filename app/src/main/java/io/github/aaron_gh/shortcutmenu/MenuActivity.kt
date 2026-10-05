@@ -28,7 +28,10 @@ import java.lang.ref.WeakReference
  *
  * Pressing volume up three times quickly while it is open starts safe mode, for when a screen reader or the phone's
  * speech has broken: it turns every screen reader off, and the menu speaks for itself with Pico,
- * the speech engine bundled with the app, so that a screen reader can be turned back on.
+ * the speech engine bundled with the app, so that a screen reader can be turned back on. However
+ * safe mode ends, it never leaves the phone without a screen reader unless one was chosen: closing
+ * the menu, choosing a service that is not a screen reader, or leaving it untouched for
+ * [SAFE_MODE_TIMEOUT_MS] turns back on the screen readers that it turned off.
  */
 class MenuActivity : Activity() {
   private lateinit var services: Services
@@ -38,6 +41,10 @@ class MenuActivity : Activity() {
   private var onSpoken: (() -> Unit)? = null
   private var finished = false
   private var safeMode = false
+  /** The screen readers that safe mode turned off, to turn back on if it ends without one. */
+  private var turnedOff: List<String> = emptyList()
+  /** Pico, while safe mode waits to hear whether it works. */
+  private var pendingPico: PicoSpeaker? = null
   /** Whether volume up went down while the menu was open, and not as part of the shortcut. */
   private var volumeUpPressed = false
   private var volumeUpDownTime = 0L
@@ -76,6 +83,7 @@ class MenuActivity : Activity() {
       current = null
     }
     handler.removeCallbacksAndMessages(null)
+    pendingPico?.shutdown()
     speaker.shutdown()
     super.onDestroy()
   }
@@ -166,7 +174,10 @@ class MenuActivity : Activity() {
     return ExploreMenuView(
       this,
       labels,
-      onHover = { row -> speak(labels[row], flush = true) },
+      onHover = { row ->
+        armSafeModeTimeout()
+        speak(labels[row], flush = true)
+      },
       onChoose = { row ->
         if (row < entries.size) {
           choose(entries[row])
@@ -186,14 +197,35 @@ class MenuActivity : Activity() {
       return
     }
     safeMode = true
-    handler.removeCallbacksAndMessages(SPEECH_TIMEOUT)
-    onSpoken = null
-    speaker.shutdown()
-    speaker = PicoSpeaker(this)
+    // Pico is tried before any screen reader turns off, so that if it cannot speak, or takes the app
+    // down with it, the screen readers are still on. If it cannot, the phone's speech stays.
+    val pico = PicoSpeaker(this)
+    pendingPico = pico
+    pico.whenReady { works ->
+      pendingPico = null
+      if (finished) {
+        pico.shutdown()
+        return@whenReady
+      }
+      if (works) {
+        handler.removeCallbacksAndMessages(SPEECH_TIMEOUT)
+        onSpoken = null
+        speaker.shutdown()
+        speaker = pico
+      } else {
+        pico.shutdown()
+      }
+      turnOffScreenReaders()
+    }
+  }
+
+  private fun turnOffScreenReaders() {
     speak(getString(R.string.safe_mode), flush = true)
     val readerWasOn = services.hasScreenReader(services.enabled())
-    services.turnOffScreenReaders {
+    services.turnOffScreenReaders { off ->
+      turnedOff = off
       if (finished) {
+        restoreScreenReaders()
         return@turnOffScreenReaders
       }
       entries = if (services.canWrite()) services.safeModeEntries() else emptyList()
@@ -202,11 +234,44 @@ class MenuActivity : Activity() {
       val intro =
         when {
           !services.canWrite() || entries.isEmpty() -> introText()
-          readerWasOn -> getString(R.string.safe_mode_readers_off)
+          turnedOff.size > 1 -> getString(R.string.safe_mode_readers_off_many)
+          readerWasOn -> getString(R.string.safe_mode_readers_off, turnedOffName())
           else -> getString(R.string.safe_mode_intro)
         }
       speak(intro, flush = false)
+      armSafeModeTimeout()
     }
+  }
+
+  /** Starts, or starts again, the wait before safe mode gives up and turns the screen readers on. */
+  private fun armSafeModeTimeout() {
+    if (!safeMode || turnedOff.isEmpty()) {
+      return
+    }
+    handler.removeCallbacksAndMessages(SAFE_MODE_TIMEOUT)
+    handler.postDelayed(
+      { speak(getString(R.string.safe_mode_timed_out, turnedOffName()), flush = true) { close() } },
+      SAFE_MODE_TIMEOUT,
+      SAFE_MODE_TIMEOUT_MS,
+    )
+  }
+
+  /** What to call the screen readers that safe mode turned off: by name when there is just one. */
+  private fun turnedOffName(): String =
+    when {
+      turnedOff.size > 1 -> getString(R.string.safe_mode_your_readers)
+      else -> turnedOff.firstOrNull()?.let { services.spokenName(it) } ?: getString(R.string.safe_mode_your_reader)
+    }
+
+  /**
+   * Turns back on the screen readers that safe mode turned off, and this app's service off, if no
+   * screen reader is on now. Returns whether it did.
+   */
+  private fun restoreScreenReaders(): Boolean {
+    if (turnedOff.isEmpty() || services.hasScreenReader(services.enabled())) {
+      return false
+    }
+    return services.restoreScreenReaders(turnedOff)
   }
 
   private fun introText(): String =
@@ -252,17 +317,23 @@ class MenuActivity : Activity() {
       if (!allowed) {
         services.turnOffSelf()
       }
+      restoreScreenReaders()
     }
     finish()
   }
 
-  /** Closes the menu without changing anything. */
+  /**
+   * Closes the menu without changing anything, but for turning back on the screen readers that safe
+   * mode turned off.
+   */
   private fun close() {
     if (finished) {
       return
     }
     finished = true
-    services.turnOffSelf()
+    if (!restoreScreenReaders()) {
+      services.turnOffSelf()
+    }
     finish()
   }
 
@@ -300,6 +371,9 @@ class MenuActivity : Activity() {
     /** Safe mode takes this many presses of volume up, each this soon after the one before. */
     private const val SAFE_MODE_PRESSES = 3
     private const val SAFE_MODE_PRESS_GAP_MS = 600L
+    /** Safe mode gives up when the screen goes this long untouched. */
+    private val SAFE_MODE_TIMEOUT = Any()
+    private const val SAFE_MODE_TIMEOUT_MS = 30_000L
 
     /** The size of the buttons' text, the same as in the menu without a screen reader. */
     private const val BUTTON_TEXT_SP = 28f

@@ -101,4 +101,16 @@ class ServiceListTest {
       ServiceList.withoutScreenReaders(listOf("com.example/.Reader"), setOf("com.example/com.example.Reader")),
     )
   }
+
+  @Test
+  fun endingSafeModeTurnsTheScreenReadersBackOnAndTheMenuOff() {
+    assertEquals(
+      listOf(selectToSpeak, backtalk),
+      ServiceList.withScreenReadersBack(listOf(self, selectToSpeak), listOf(backtalk), self),
+    )
+    assertEquals(
+      listOf(backtalk),
+      ServiceList.withScreenReadersBack(listOf(backtalk), listOf(backtalk), self),
+    )
+  }
 }

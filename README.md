@@ -13,6 +13,8 @@ Without Shortcut Menu, a shortcut with more than one feature on it asks which on
 
 If your screen reader or your phone's speech stops working, open the menu and press **volume up three times quickly**. Safe mode turns every screen reader off, and the menu speaks for itself with its own speech engine, [SVOX Pico](app/src/main/cpp/pico), instead of the phone's. Drag your finger to hear the choices, and lift it on a screen reader to turn it back on. With no screen reader on, it only switches the menu to its own speech.
 
+Safe mode never leaves you without a screen reader unless you chose that. If it ends without one turned on, by **Close**, by choosing a service that is not a screen reader, by the screen turning off, or by 30 seconds with nothing touched, it turns back on the screen reader that it turned off, and only that one. Before it turns anything off, it checks that its own speech works, and if not, the menu keeps the phone's speech.
+
 The menu speaks American English on phones set to the United States, and British English everywhere else. Pico reads only the Latin alphabet, so in safe mode the menu names each service in English. A service with no English name, in an alphabet Pico cannot read, is called "Screen reader 1", "Screen reader 2" and so on, in menu order. Each press of volume up still changes the volume, so a single press meant for the volume does only that.
 
 ## Set up

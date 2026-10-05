@@ -104,6 +104,13 @@ class Services(private val context: Context) {
       }
   }
 
+  /** The name of [component] in English, if it is installed and Pico can say its name. */
+  fun spokenName(component: String): String? =
+    installed(inEnglish = true)
+      .firstOrNull { ServiceList.normalize(it.component) == ServiceList.normalize(component) }
+      ?.label
+      ?.takeIf { MenuLabels.speakable(it) }
+
   /**
    * The name of a service in English, found the way Android finds its name in the phone's language,
    * or null if it has none of its own.
@@ -174,20 +181,28 @@ class Services(private val context: Context) {
   }
 
   /**
-   * Turns every screen reader off for safe mode, and calls [done] once they have stopped and let go
-   * of explore by touch, or at once if none was on or they cannot be turned off.
+   * Turns every screen reader off for safe mode, and calls [done] with the ones it turned off, once
+   * they have stopped and let go of explore by touch. Calls it at once, with none, if none was on or
+   * they cannot be turned off.
    */
-  fun turnOffScreenReaders(done: () -> Unit) {
+  fun turnOffScreenReaders(done: (List<String>) -> Unit) {
     val enabled = enabled()
     val after = ServiceList.withoutScreenReaders(enabled, screenReaders())
     if (after.size == enabled.size || !write(after)) {
-      done()
+      done(emptyList())
       return
     }
     val kept = after.map { ServiceList.normalize(it) }.toSet()
-    val stopping = enabled.map { ServiceList.normalize(it) }.filterNot { it in kept }.toSet()
-    waitUntilStopped(stopping, done)
+    val turnedOff = enabled.filterNot { ServiceList.normalize(it) in kept }
+    waitUntilStopped(turnedOff.map { ServiceList.normalize(it) }.toSet()) { done(turnedOff) }
   }
+
+  /**
+   * Turns [readers] back on, and this app's service off, when safe mode ends with no screen reader
+   * on. Returns whether it could.
+   */
+  fun restoreScreenReaders(readers: List<String>): Boolean =
+    write(ServiceList.withScreenReadersBack(enabled(), readers, self))
 
   /**
    * Runs [then] once none of [components] is running and explore by touch is off, after a moment

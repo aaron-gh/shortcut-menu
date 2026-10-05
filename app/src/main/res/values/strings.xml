@@ -19,7 +19,12 @@
     <string name="turned_off">%1$s off</string>
     <!-- Safe mode, which three quick presses of volume up start while the menu is open. -->
     <string name="safe_mode">Safe mode.</string>
-    <string name="safe_mode_readers_off">Screen readers are off. Drag your finger to hear the choices, then lift it to choose.</string>
+    <!-- %1$s is the screen reader that safe mode turned off, such as "Backtalk", or safe_mode_your_reader. -->
+    <string name="safe_mode_readers_off">Screen readers are off. Drag your finger to hear the choices, then lift it to choose. If you leave it for 30 seconds, %1$s comes back on.</string>
+    <string name="safe_mode_readers_off_many">Screen readers are off. Drag your finger to hear the choices, then lift it to choose. If you leave it for 30 seconds, your screen readers come back on.</string>
+    <string name="safe_mode_timed_out">Turning %1$s back on.</string>
+    <string name="safe_mode_your_reader">your screen reader</string>
+    <string name="safe_mode_your_readers">your screen readers</string>
     <!-- In safe mode, a service whose name Pico cannot read, numbered in menu order. -->
     <string name="safe_mode_screen_reader">Screen reader %1$d</string>
     <string name="safe_mode_service">Service %1$d</string>

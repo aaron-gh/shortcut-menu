@@ -113,6 +113,17 @@ class PicoSpeaker(context: Context) : Speaker {
     worker.post { pico = PicoTts.open(appContext, PicoVoice.forLocale(Locale.getDefault())) }
   }
 
+  /**
+   * Calls [ready] on the main thread with whether Pico opened and can make speech, once it has
+   * tried.
+   */
+  fun whenReady(ready: (Boolean) -> Unit) {
+    worker.post {
+      val works = pico?.synthesize(TEST_PHRASE)?.isNotEmpty() == true
+      main.post { ready(works) }
+    }
+  }
+
   override fun speak(text: String, flush: Boolean, done: (() -> Unit)?) {
     val current = if (flush) generation.incrementAndGet() else generation.get()
     worker.post { play(text, current, done) }
@@ -180,5 +191,6 @@ class PicoSpeaker(context: Context) : Speaker {
   private companion object {
     const val POLL_MS = 10L
     const val PLAY_SLACK_MS = 1000L
+    const val TEST_PHRASE = "Safe mode"
   }
 }
