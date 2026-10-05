@@ -103,23 +103,30 @@ class MenuActivity : Activity() {
       list.addView(
         Button(this).apply {
           text = entryText(entry)
+          setTextSize(TypedValue.COMPLEX_UNIT_SP, BUTTON_TEXT_SP)
           setOnClickListener { choose(entry) }
         },
-        LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+        rowParams(),
       )
     }
     list.addView(
       Button(this).apply {
         setText(R.string.menu_close)
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, BUTTON_TEXT_SP)
         setOnClickListener { close() }
       },
-      LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+      rowParams(),
     )
+    // The buttons share the screen, as in the menu without a screen reader, and scroll only when
+    // there are too many to fit.
     return ScrollView(this).apply {
       fitsSystemWindows = true
+      isFillViewport = true
       addView(list)
     }
   }
+
+  private fun rowParams() = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
 
   private fun buildExploreView(): View {
     val labels = entries.map { entryText(it) } + getString(R.string.menu_close)
@@ -271,6 +278,9 @@ class MenuActivity : Activity() {
     private const val UTTERANCE_DONE = "done"
     private val SPEECH_TIMEOUT = Any()
     private const val SPEECH_TIMEOUT_MS = 4000L
+
+    /** The size of the buttons' text, the same as in the menu without a screen reader. */
+    private const val BUTTON_TEXT_SP = 28f
 
     private var current: WeakReference<MenuActivity>? = null
 

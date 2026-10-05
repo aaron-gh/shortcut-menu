@@ -38,7 +38,7 @@
             android:launchMode="singleTask"
             android:showWhenLocked="true"
             android:taskAffinity=""
-            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+            android:theme="@style/MenuTheme" />
 
         <service
             android:name=".ShortcutMenuService"

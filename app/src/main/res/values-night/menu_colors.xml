@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The menu without a screen reader, in dark mode. -->
+    <color name="menu_background">#000000</color>
+    <color name="menu_text">#FFFFFF</color>
+    <color name="menu_line">#555555</color>
+    <color name="menu_highlight">#1A4A8A</color>
+</resources>

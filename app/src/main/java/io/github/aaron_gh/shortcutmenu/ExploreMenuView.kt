@@ -26,19 +26,19 @@ class ExploreMenuView(
 
   private val textPaint =
     Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = 0xFFFFFFFF.toInt()
+      color = context.getColor(R.color.menu_text)
       textAlign = Paint.Align.CENTER
       textSize = sp(28f)
     }
   private val linePaint =
     Paint().apply {
-      color = 0xFF555555.toInt()
+      color = context.getColor(R.color.menu_line)
       strokeWidth = sp(1f)
     }
-  private val highlightPaint = Paint().apply { color = 0xFF1A4A8A.toInt() }
+  private val highlightPaint = Paint().apply { color = context.getColor(R.color.menu_highlight) }
 
   init {
-    setBackgroundColor(0xFF000000.toInt())
+    setBackgroundColor(context.getColor(R.color.menu_background))
     isHapticFeedbackEnabled = true
   }
 
