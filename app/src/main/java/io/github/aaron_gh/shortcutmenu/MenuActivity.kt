@@ -10,10 +10,9 @@ import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -65,7 +64,6 @@ class MenuActivity : Activity() {
       setContentView(buildList())
     } else {
       setContentView(buildExploreView())
-      hideSystemBars()
       speak(introText(), flush = false)
     }
   }
@@ -169,9 +167,14 @@ class MenuActivity : Activity() {
 
   private fun rowParams() = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
 
+  /**
+   * The menu that speaks for itself. It sits between the status and navigation bars rather than
+   * hiding them: hiding them makes Android show "Viewing full screen" the first time, a dialog that
+   * is not spoken, covers the top rows, and takes the touches meant for them.
+   */
   private fun buildExploreView(): View {
     val labels = entries.map { entryText(it) } + getString(R.string.menu_close)
-    return ExploreMenuView(
+    val menu = ExploreMenuView(
       this,
       labels,
       onHover = { row ->
@@ -186,6 +189,11 @@ class MenuActivity : Activity() {
         }
       },
     )
+    return FrameLayout(this).apply {
+      fitsSystemWindows = true
+      setBackgroundColor(getColor(R.color.menu_background))
+      addView(menu)
+    }
   }
 
   /**
@@ -230,7 +238,6 @@ class MenuActivity : Activity() {
       }
       entries = if (services.canWrite()) services.safeModeEntries() else emptyList()
       setContentView(buildExploreView())
-      hideSystemBars()
       val intro =
         when {
           !services.canWrite() || entries.isEmpty() -> introText()
@@ -352,13 +359,6 @@ class MenuActivity : Activity() {
     onSpoken = null
     handler.removeCallbacksAndMessages(SPEECH_TIMEOUT)
     done()
-  }
-
-  private fun hideSystemBars() {
-    window.insetsController?.let {
-      it.hide(WindowInsets.Type.systemBars())
-      it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-    }
   }
 
   private fun dp(value: Int): Int =
