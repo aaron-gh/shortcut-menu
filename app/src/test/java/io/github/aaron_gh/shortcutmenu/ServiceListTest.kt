@@ -85,4 +85,20 @@ class ServiceListTest {
     val after = ServiceList.toggle(enabled, backtalk, self, readers)
     assertEquals(emptyList<String>(), ServiceList.mustStopFirst(enabled, after, readers))
   }
+
+  @Test
+  fun safeModeTurnsEveryScreenReaderOffAndKeepsTheRest() {
+    assertEquals(
+      listOf(self, selectToSpeak),
+      ServiceList.withoutScreenReaders(listOf(backtalk, self, selectToSpeak, talkback), readers),
+    )
+  }
+
+  @Test
+  fun safeModeMatchesShortClassNames() {
+    assertEquals(
+      emptyList<String>(),
+      ServiceList.withoutScreenReaders(listOf("com.example/.Reader"), setOf("com.example/com.example.Reader")),
+    )
+  }
 }

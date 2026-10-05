@@ -21,6 +21,16 @@ object MenuLabels {
     }
   }
 
+  /**
+   * Whether Pico, which reads only the Latin alphabet, can say anything of [label]: whether it has a
+   * Latin letter or a digit.
+   */
+  fun speakable(label: String): Boolean =
+    label.codePoints().anyMatch {
+      it in '0'.code..'9'.code ||
+        (Character.isLetter(it) && Character.UnicodeScript.of(it) == Character.UnicodeScript.LATIN)
+    }
+
   /** The maker in a package name: the part after the top-level domain, such as "Samsung". */
   fun maker(packageName: String): String {
     val parts = packageName.split('.').filter { it.isNotEmpty() }

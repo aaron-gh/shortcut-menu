@@ -9,6 +9,12 @@ Turning a screen reader on turns any other screen reader off, so two never talk 
 
 Without Shortcut Menu, a shortcut with more than one feature on it asks which one to use, and that question is not spoken when no screen reader is on.
 
+## Safe mode
+
+If your screen reader or your phone's speech stops working, open the menu and press **volume up three times quickly**. Safe mode turns every screen reader off, and the menu speaks for itself with its own speech engine, [SVOX Pico](app/src/main/cpp/pico), instead of the phone's. Drag your finger to hear the choices, and lift it on a screen reader to turn it back on. With no screen reader on, it only switches the menu to its own speech.
+
+The menu speaks American English on phones set to the United States, and British English everywhere else. Pico reads only the Latin alphabet, so in safe mode the menu names each service in English. A service with no English name, in an alphabet Pico cannot read, is called "Screen reader 1", "Screen reader 2" and so on, in menu order. Each press of volume up still changes the volume, so a single press meant for the volume does only that.
+
 ## Set up
 
 1.  Download `shortcut-menu.apk` from the [latest release](https://github.com/aaron-gh/shortcut-menu/releases/latest) and install it. Android asks you to allow installing apps from your browser or file manager the first time.
@@ -41,8 +47,10 @@ Choosing a service changes Android's list of enabled accessibility services dire
 ./gradlew assembleDebug
 ```
 
+It needs the Android NDK and CMake, which Gradle installs if they are missing, to build Pico.
+
 Each tag such as `v0.1` builds a release APK on GitHub, signed with the release key, and publishes it as a release. Make it an annotated tag, since its message becomes the release notes: `git tag -a v0.3 -m "What changed"`.
 
 ## License
 
-Shortcut Menu is licensed under the [Apache License 2.0](LICENSE).
+Shortcut Menu is licensed under the [Apache License 2.0](LICENSE). It includes SVOX Pico from the Android Open Source Project, also under the Apache License 2.0: see [its notice](app/src/main/cpp/pico/NOTICE).

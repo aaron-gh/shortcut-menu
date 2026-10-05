@@ -66,4 +66,10 @@ object ServiceList {
     }
     return enabled.filter { normalize(it) in readers && normalize(it) !in afterSet }
   }
+
+  /** The enabled services with every one of [screenReaders] turned off, for safe mode. */
+  fun withoutScreenReaders(enabled: List<String>, screenReaders: Set<String>): List<String> {
+    val readers = screenReaders.map { normalize(it) }.toSet()
+    return enabled.filterNot { normalize(it) in readers }
+  }
 }

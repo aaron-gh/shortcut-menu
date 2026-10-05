@@ -3,13 +3,11 @@ package io.github.aaron_gh.shortcutmenu
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.util.TypedValue
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -27,16 +25,24 @@ import java.lang.ref.WeakReference
  * With a screen reader on, it is a plain list of buttons that the screen reader reads. With none on,
  * it speaks for itself: see [ExploreMenuView]. Choosing a service turns it on or off, and closing the
  * menu in any way turns this app's service off, ready for the next press of the shortcut.
+ *
+ * Pressing volume up three times quickly while it is open starts safe mode, for when a screen reader or the phone's
+ * speech has broken: it turns every screen reader off, and the menu speaks for itself with Pico,
+ * the speech engine bundled with the app, so that a screen reader can be turned back on.
  */
 class MenuActivity : Activity() {
   private lateinit var services: Services
   private lateinit var entries: List<MenuEntry>
   private val handler = Handler(Looper.getMainLooper())
-  private var tts: TextToSpeech? = null
-  private var ttsReady = false
-  private var pendingSpeech: String? = null
+  private lateinit var speaker: Speaker
   private var onSpoken: (() -> Unit)? = null
   private var finished = false
+  private var safeMode = false
+  /** Whether volume up went down while the menu was open, and not as part of the shortcut. */
+  private var volumeUpPressed = false
+  private var volumeUpDownTime = 0L
+  private var volumeDownHeld = false
+  private val safeModePresses = QuickPresses(SAFE_MODE_PRESSES, SAFE_MODE_PRESS_GAP_MS)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -44,7 +50,7 @@ class MenuActivity : Activity() {
     // The application context, since switching screen readers outlives this screen.
     services = Services(applicationContext)
     entries = if (services.canWrite()) services.menuEntries() else emptyList()
-    tts = TextToSpeech(this) { status -> onTtsInit(status) }
+    speaker = SystemSpeaker(this)
 
     val screenReaderOn =
       getSystemService(AccessibilityManager::class.java).isTouchExplorationEnabled
@@ -70,9 +76,36 @@ class MenuActivity : Activity() {
       current = null
     }
     handler.removeCallbacksAndMessages(null)
-    tts?.shutdown()
-    tts = null
+    speaker.shutdown()
     super.onDestroy()
+  }
+
+  override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    when (event.keyCode) {
+      KeyEvent.KEYCODE_VOLUME_DOWN -> {
+        volumeDownHeld = event.action == KeyEvent.ACTION_DOWN
+        if (volumeDownHeld) {
+          volumeUpPressed = false
+          safeModePresses.reset()
+        }
+      }
+      KeyEvent.KEYCODE_VOLUME_UP -> {
+        // Only fresh presses count: not the release of the keys held down for the shortcut. Each
+        // press still changes the volume as usual, so that one meant for the volume does just that.
+        if (!safeMode) {
+          if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            volumeUpPressed = !volumeDownHeld
+            volumeUpDownTime = event.eventTime
+          } else if (event.action == KeyEvent.ACTION_UP && volumeUpPressed) {
+            volumeUpPressed = false
+            if (safeModePresses.press(volumeUpDownTime)) {
+              enterSafeMode()
+            }
+          }
+        }
+      }
+    }
+    return super.dispatchKeyEvent(event)
   }
 
   @Deprecated("Deprecated in Java")
@@ -144,6 +177,38 @@ class MenuActivity : Activity() {
     )
   }
 
+  /**
+   * Turns every screen reader off, and speaks the menu with Pico instead of the phone's speech
+   * engine. With no screen reader on, only the speech changes.
+   */
+  private fun enterSafeMode() {
+    if (finished || safeMode) {
+      return
+    }
+    safeMode = true
+    handler.removeCallbacksAndMessages(SPEECH_TIMEOUT)
+    onSpoken = null
+    speaker.shutdown()
+    speaker = PicoSpeaker(this)
+    speak(getString(R.string.safe_mode), flush = true)
+    val readerWasOn = services.hasScreenReader(services.enabled())
+    services.turnOffScreenReaders {
+      if (finished) {
+        return@turnOffScreenReaders
+      }
+      entries = if (services.canWrite()) services.safeModeEntries() else emptyList()
+      setContentView(buildExploreView())
+      hideSystemBars()
+      val intro =
+        when {
+          !services.canWrite() || entries.isEmpty() -> introText()
+          readerWasOn -> getString(R.string.safe_mode_readers_off)
+          else -> getString(R.string.safe_mode_intro)
+        }
+      speak(intro, flush = false)
+    }
+  }
+
   private fun introText(): String =
     when {
       !services.canWrite() -> getString(R.string.menu_intro_needs_permission)
@@ -208,17 +273,7 @@ class MenuActivity : Activity() {
       handler.removeCallbacksAndMessages(SPEECH_TIMEOUT)
       handler.postDelayed({ runOnSpoken() }, SPEECH_TIMEOUT, SPEECH_TIMEOUT_MS)
     }
-    val engine = tts
-    if (engine == null || !ttsReady) {
-      pendingSpeech = if (flush || pendingSpeech == null) text else "$pendingSpeech. $text"
-      return
-    }
-    engine.speak(
-      text,
-      if (flush) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD,
-      null,
-      if (done != null) UTTERANCE_DONE else UTTERANCE_PLAIN,
-    )
+    speaker.speak(text, flush, if (done != null) ({ runOnSpoken() }) else null)
   }
 
   private fun runOnSpoken() {
@@ -226,40 +281,6 @@ class MenuActivity : Activity() {
     onSpoken = null
     handler.removeCallbacksAndMessages(SPEECH_TIMEOUT)
     done()
-  }
-
-  private fun onTtsInit(status: Int) {
-    val engine = tts ?: return
-    if (status != TextToSpeech.SUCCESS) {
-      return
-    }
-    engine.setAudioAttributes(
-      AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-        .build()
-    )
-    engine.setOnUtteranceProgressListener(
-      object : UtteranceProgressListener() {
-        override fun onStart(utteranceId: String?) {}
-
-        override fun onDone(utteranceId: String?) {
-          if (utteranceId == UTTERANCE_DONE) {
-            handler.post { runOnSpoken() }
-          }
-        }
-
-        @Deprecated("Deprecated in Java")
-        override fun onError(utteranceId: String?) {
-          onDone(utteranceId)
-        }
-      }
-    )
-    ttsReady = true
-    pendingSpeech?.let { text ->
-      pendingSpeech = null
-      engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, if (onSpoken != null) UTTERANCE_DONE else UTTERANCE_PLAIN)
-    }
   }
 
   private fun hideSystemBars() {
@@ -274,10 +295,11 @@ class MenuActivity : Activity() {
       .toInt()
 
   companion object {
-    private const val UTTERANCE_PLAIN = "plain"
-    private const val UTTERANCE_DONE = "done"
     private val SPEECH_TIMEOUT = Any()
     private const val SPEECH_TIMEOUT_MS = 4000L
+    /** Safe mode takes this many presses of volume up, each this soon after the one before. */
+    private const val SAFE_MODE_PRESSES = 3
+    private const val SAFE_MODE_PRESS_GAP_MS = 600L
 
     /** The size of the buttons' text, the same as in the menu without a screen reader. */
     private const val BUTTON_TEXT_SP = 28f
@@ -299,5 +321,29 @@ class MenuActivity : Activity() {
     fun closeOpenMenu() {
       current?.get()?.close()
     }
+  }
+}
+
+/** Counts presses of a key that come quickly one after another. */
+class QuickPresses(private val count: Int, private val maxGapMs: Long) {
+  private var presses = 0
+  private var lastTime = 0L
+
+  /**
+   * Records a press at [time], in milliseconds. Returns true when it makes [count] presses in a row,
+   * each no more than [maxGapMs] after the one before, and starts counting again.
+   */
+  fun press(time: Long): Boolean {
+    presses = if (presses > 0 && time - lastTime <= maxGapMs) presses + 1 else 1
+    lastTime = time
+    if (presses >= count) {
+      presses = 0
+      return true
+    }
+    return false
+  }
+
+  fun reset() {
+    presses = 0
   }
 }

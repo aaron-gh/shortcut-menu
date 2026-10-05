@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Shortcut Menu</string>
-    <string name="service_description">Lets the accessibility shortcut turn your choice of screen reader or other accessibility service on or off. With no screen reader on, the menu speaks for itself: drag your finger to hear the choices, and lift it to choose.</string>
+    <string name="service_description">Lets the accessibility shortcut turn your choice of screen reader or other accessibility service on or off. With no screen reader on, the menu speaks for itself: drag your finger to hear the choices, and lift it to choose. If your screen reader stops working, press volume up three times quickly in the menu to turn screen readers off and hear the menu in its own voice.</string>
 
     <string name="menu_title">Shortcut menu</string>
     <string name="menu_intro">Shortcut menu. Drag your finger to hear the choices, then lift it to choose.</string>
@@ -17,8 +17,15 @@
     <!-- Said after the menu turns a service on or off. -->
     <string name="turned_on">%1$s on</string>
     <string name="turned_off">%1$s off</string>
+    <!-- Safe mode, which three quick presses of volume up start while the menu is open. -->
+    <string name="safe_mode">Safe mode.</string>
+    <string name="safe_mode_readers_off">Screen readers are off. Drag your finger to hear the choices, then lift it to choose.</string>
+    <!-- In safe mode, a service whose name Pico cannot read, numbered in menu order. -->
+    <string name="safe_mode_screen_reader">Screen reader %1$d</string>
+    <string name="safe_mode_service">Service %1$d</string>
+    <string name="safe_mode_intro">Drag your finger to hear the choices, then lift it to choose.</string>
 
-    <string name="settings_intro">Shortcut Menu turns your choice of accessibility services on and off from the accessibility shortcut, such as holding both volume keys. With a screen reader on, the menu is a list that the screen reader reads. With none on, it speaks for itself: drag your finger to hear the choices, and lift it to choose. Turning a screen reader on turns any other screen reader off.</string>
+    <string name="settings_intro">Shortcut Menu turns your choice of accessibility services on and off from the accessibility shortcut, such as holding both volume keys. With a screen reader on, the menu is a list that the screen reader reads. With none on, it speaks for itself: drag your finger to hear the choices, and lift it to choose. Turning a screen reader on turns any other screen reader off. If your screen reader or your phone\'s speech stops working, press volume up three times quickly in the menu for safe mode: it turns screen readers off and speaks the menu in its own voice, so you can turn one back on.</string>
     <string name="settings_permission_heading">Permission</string>
     <string name="settings_permission_granted">Granted. Shortcut Menu can turn services on and off.</string>
     <string name="settings_permission_needed">Android only lets apps turn accessibility services on and off with a permission that you grant once, from a computer with adb, or with Shizuku. Run this command:</string>

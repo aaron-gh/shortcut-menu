@@ -39,6 +39,19 @@ android {
         targetSdk = 36
         versionCode = 3
         versionName = "0.3"
+        // Pico, the speech that safe mode uses, is native code.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
+    }
+
+    ndkVersion = "28.2.13676358"
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     signingConfigs {

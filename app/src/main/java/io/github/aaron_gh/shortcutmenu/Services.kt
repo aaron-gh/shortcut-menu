@@ -5,11 +5,14 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import java.util.Locale
 
 /** An accessibility service that the menu can turn on or off. */
 data class MenuEntry(
@@ -34,9 +37,10 @@ class Services(private val context: Context) {
 
   /**
    * Every installed accessibility service but this one, sorted by name. Services with the same
-   * name, such as Google's and Samsung's TalkBack, get their maker added.
+   * name, such as Google's and Samsung's TalkBack, get their maker added. With [inEnglish], the names
+   * are in English where the service has an English name, rather than in the phone's language.
    */
-  fun installed(): List<MenuEntry> {
+  fun installed(inEnglish: Boolean = false): List<MenuEntry> {
     val enabled = enabled()
     val infos =
       accessibilityManager.installedAccessibilityServiceList.filterNot {
@@ -46,7 +50,8 @@ class Services(private val context: Context) {
       MenuLabels.distinct(
         infos.map { info ->
           MenuLabels.Service(
-            info.resolveInfo.loadLabel(context.packageManager).toString(),
+            (if (inEnglish) englishLabel(info) else null)
+              ?: info.resolveInfo.loadLabel(context.packageManager).toString(),
             info.resolveInfo.serviceInfo.packageName,
           )
         }
@@ -78,6 +83,58 @@ class Services(private val context: Context) {
     val chosen = chosen().map { ServiceList.normalize(it) }.toSet()
     return installed().filter { ServiceList.normalize(it.component) in chosen }
   }
+
+  /**
+   * The services to show in the safe mode menu, named so that Pico can say them: in English, or,
+   * for a service whose name is in an alphabet Pico cannot read, as "Screen reader 1" and so on, in
+   * menu order.
+   */
+  fun safeModeEntries(): List<MenuEntry> {
+    val chosen = chosen().map { ServiceList.normalize(it) }.toSet()
+    var readers = 0
+    var others = 0
+    return installed(inEnglish = true)
+      .filter { ServiceList.normalize(it.component) in chosen }
+      .map { entry ->
+        when {
+          MenuLabels.speakable(entry.label) -> entry
+          entry.screenReader -> entry.copy(label = context.getString(R.string.safe_mode_screen_reader, ++readers))
+          else -> entry.copy(label = context.getString(R.string.safe_mode_service, ++others))
+        }
+      }
+  }
+
+  /**
+   * The name of a service in English, found the way Android finds its name in the phone's language,
+   * or null if it has none of its own.
+   */
+  private fun englishLabel(info: AccessibilityServiceInfo): String? {
+    val resolve = info.resolveInfo
+    val service = resolve.serviceInfo
+    val resources = englishResources(service.packageName) ?: return null
+    fun label(labelRes: Int, nonLocalized: CharSequence?): String? =
+      nonLocalized?.toString()
+        ?: labelRes.takeIf { it != 0 }?.let {
+          try {
+            resources.getText(it).toString()
+          } catch (e: Resources.NotFoundException) {
+            null
+          }
+        }
+    return label(resolve.labelRes, resolve.nonLocalizedLabel)
+      ?: label(service.labelRes, service.nonLocalizedLabel)
+      ?: service.applicationInfo?.let { label(it.labelRes, it.nonLocalizedLabel) }
+  }
+
+  private fun englishResources(packageName: String): Resources? =
+    try {
+      val config = Configuration(context.resources.configuration).apply { setLocale(Locale.ENGLISH) }
+      context.createPackageContext(packageName, 0).createConfigurationContext(config).resources
+    } catch (e: PackageManager.NameNotFoundException) {
+      null
+    } catch (e: SecurityException) {
+      null
+    }
 
   fun enabled(): List<String> =
     ServiceList.parse(
@@ -114,6 +171,22 @@ class Services(private val context: Context) {
       return
     }
     waitUntilStopped(stopping) { done(write(afterToggle(entry))) }
+  }
+
+  /**
+   * Turns every screen reader off for safe mode, and calls [done] once they have stopped and let go
+   * of explore by touch, or at once if none was on or they cannot be turned off.
+   */
+  fun turnOffScreenReaders(done: () -> Unit) {
+    val enabled = enabled()
+    val after = ServiceList.withoutScreenReaders(enabled, screenReaders())
+    if (after.size == enabled.size || !write(after)) {
+      done()
+      return
+    }
+    val kept = after.map { ServiceList.normalize(it) }.toSet()
+    val stopping = enabled.map { ServiceList.normalize(it) }.filterNot { it in kept }.toSet()
+    waitUntilStopped(stopping, done)
   }
 
   /**
