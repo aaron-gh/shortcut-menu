@@ -9,6 +9,15 @@
     <string name="menu_intro_needs_permission">Shortcut menu cannot turn services on or off until it has permission. Its settings say how to grant it. Lift your finger to close.</string>
     <string name="menu_needs_permission">Shortcut Menu cannot turn services on or off until it has permission. Its settings say how to grant it.</string>
     <string name="menu_empty">No services are chosen for the menu. Choose them in Shortcut Menu settings.</string>
+    <string name="menu_engines">System text-to-speech engine</string>
+    <string name="menu_engines_title">Text-to-speech engine</string>
+    <string name="menu_engines_intro">Text-to-speech engine. Drag your finger to hear the choices, then lift it to choose.</string>
+    <string name="menu_engines_empty">No text-to-speech engines are installed.</string>
+    <string name="menu_back">Back</string>
+    <!-- The default text-to-speech engine in the list of engines. -->
+    <string name="engine_current">%1$s, default</string>
+    <!-- Said after the menu makes an engine the default. -->
+    <string name="engine_selected">%1$s selected</string>
     <string name="menu_close">Close</string>
     <string name="menu_closed">Closed</string>
     <!-- A service in the menu, and whether it is on. -->
@@ -27,6 +36,7 @@
     <string name="safe_mode_your_readers">your screen readers</string>
     <!-- In safe mode, a service whose name Pico cannot read, numbered in menu order. -->
     <string name="safe_mode_screen_reader">Screen reader %1$d</string>
+    <string name="safe_mode_engine">Engine %1$d</string>
     <string name="safe_mode_service">Service %1$d</string>
     <string name="safe_mode_intro">Drag your finger to hear the choices, then lift it to choose.</string>
 
@@ -48,6 +58,7 @@
     <string name="settings_open_accessibility">Open Accessibility settings</string>
     <string name="settings_choices_heading">Services in the menu</string>
     <string name="settings_choices_help">Choose which services the menu offers.</string>
+    <string name="settings_engine_menu">Allow changing the default text-to-speech engine</string>
     <string name="settings_screen_reader">%1$s, screen reader</string>
     <string name="settings_try_heading">Try it</string>
     <string name="settings_try">Open the menu</string>

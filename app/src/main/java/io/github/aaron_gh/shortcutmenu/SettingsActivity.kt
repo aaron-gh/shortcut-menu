@@ -74,6 +74,14 @@ class SettingsActivity : Activity() {
 
     heading(R.string.settings_choices_heading)
     paragraph(getString(R.string.settings_choices_help))
+    content.addView(
+      CheckBox(this).apply {
+        setText(R.string.settings_engine_menu)
+        isChecked = services.engineMenu()
+        setOnCheckedChangeListener { _, checked -> services.setEngineMenu(checked) }
+      },
+      matchWidth(),
+    )
     val chosen = services.chosen().map { ServiceList.normalize(it) }.toMutableSet()
     for (entry in services.installed()) {
       content.addView(

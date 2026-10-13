@@ -34,7 +34,7 @@ The menu speaks American English on phones set to the United States, and British
 
 The shortcut turns Shortcut Menu's accessibility service on, and the service opens the menu. When the menu closes, the service turns itself off, so the next press turns it on again. A press while the menu is open turns the service off, which closes the menu.
 
-Choosing a service changes Android's list of enabled accessibility services directly, so Android does not ask "Allow full control?" each time. The menu speaks with the phone's text-to-speech engine, at the accessibility volume.
+Choosing a service changes Android's list of enabled accessibility services directly, so Android does not ask "Allow full control?" each time. The menu speaks with the phone's text-to-speech engine, at the accessibility volume. With **Allow changing the default text-to-speech engine** turned on in the settings, the menu has a **System text-to-speech engine** entry above Close, which lists the installed engines and makes the one you choose the phone's default. It speaks the list like the rest of the menu, with Pico in safe mode, where an engine whose name Pico cannot read is called "Engine 1" and so on. Apps that already have an engine open, such as a screen reader, may use the new one only after they restart.
 
 ## Limitations
 

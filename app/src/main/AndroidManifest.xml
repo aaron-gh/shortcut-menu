@@ -7,10 +7,13 @@
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- Lets the app see every accessibility service, to offer them in the menu. -->
+    <!-- Lets the app see every accessibility service, to offer them in the menu, and every text-to-speech engine. -->
     <queries>
         <intent>
             <action android:name="android.accessibilityservice.AccessibilityService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
     </queries>
 

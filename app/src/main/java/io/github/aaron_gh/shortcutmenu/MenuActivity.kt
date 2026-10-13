@@ -35,6 +35,10 @@ import java.lang.ref.WeakReference
 class MenuActivity : Activity() {
   private lateinit var services: Services
   private lateinit var entries: List<MenuEntry>
+  /** The text-to-speech engines, while the menu shows them in place of the services. */
+  private var engines: List<TtsEngine> = emptyList()
+  private var enginePage = false
+  private var screenReaderOn = false
   private val handler = Handler(Looper.getMainLooper())
   private lateinit var speaker: Speaker
   private var onSpoken: (() -> Unit)? = null
@@ -58,13 +62,81 @@ class MenuActivity : Activity() {
     entries = if (services.canWrite()) services.menuEntries() else emptyList()
     speaker = SystemSpeaker(this)
 
-    val screenReaderOn =
-      getSystemService(AccessibilityManager::class.java).isTouchExplorationEnabled
+    screenReaderOn = getSystemService(AccessibilityManager::class.java).isTouchExplorationEnabled
     if (screenReaderOn) {
       setContentView(buildList())
     } else {
       setContentView(buildExploreView())
       speak(introText(), flush = false)
+    }
+  }
+
+  /** A row of the menu. In the menu that speaks, [announce] is said before [action] runs. */
+  private class Row(val label: String, val announce: String? = null, val action: () -> Unit)
+
+  /** The rows of the page being shown, ending with Close, or Back on the page of engines. */
+  private fun rows(): List<Row> {
+    if (enginePage) {
+      return engines.map { engine -> Row(engineText(engine)) { chooseEngine(engine) } } +
+        Row(getString(R.string.menu_back)) { showPage(engines = false) }
+    }
+    val rows = entries.map { entry -> Row(entryText(entry)) { choose(entry) } }.toMutableList()
+    if (services.canWrite() && services.engineMenu()) {
+      rows += Row(getString(R.string.menu_engines)) { showPage(engines = true) }
+    }
+    rows += Row(getString(R.string.menu_close), announce = getString(R.string.menu_closed)) { close() }
+    return rows
+  }
+
+  /** Shows the services, or the text-to-speech engines, and speaks which, after [lead] if any. */
+  private fun showPage(engines: Boolean, lead: String? = null) {
+    if (finished) {
+      return
+    }
+    enginePage = engines
+    if (engines) {
+      this.engines = services.engines(forPico = safeMode)
+    }
+    if (safeMode || !screenReaderOn) {
+      setContentView(buildExploreView())
+      val intro =
+        when {
+          !engines -> getString(R.string.menu_intro)
+          this.engines.isEmpty() -> getString(R.string.menu_engines_empty)
+          else -> getString(R.string.menu_engines_intro)
+        }
+      speak(if (lead != null) "$lead. $intro" else intro, flush = true)
+      armSafeModeTimeout()
+    } else {
+      setContentView(buildList())
+    }
+  }
+
+  private fun engineText(engine: TtsEngine): String =
+    if (engine.current) getString(R.string.engine_current, engine.label) else engine.label
+
+  /**
+   * Makes [engine] the default and closes the menu. Without a screen reader to say so, the menu
+   * says it first, with the engine that is still the default. In safe mode the menu stays open and
+   * goes back to the services, so that a screen reader can be turned back on.
+   */
+  private fun chooseEngine(engine: TtsEngine) {
+    if (finished) {
+      return
+    }
+    if (safeMode) {
+      services.setDefaultEngine(engine)
+      showPage(engines = false, lead = getString(R.string.engine_selected, engine.label))
+      return
+    }
+    val change = {
+      services.setDefaultEngine(engine)
+      close()
+    }
+    if (services.hasScreenReader(services.enabled())) {
+      change()
+    } else {
+      speak(getString(R.string.engine_selected, engine.label), flush = true) { change() }
     }
   }
 
@@ -128,34 +200,30 @@ class MenuActivity : Activity() {
       }
     list.addView(
       TextView(this).apply {
-        setText(R.string.menu_title)
+        setText(if (enginePage) R.string.menu_engines_title else R.string.menu_title)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
         isAccessibilityHeading = true
       }
     )
-    if (!services.canWrite()) {
+    if (enginePage) {
+      if (engines.isEmpty()) {
+        list.addView(TextView(this).apply { setText(R.string.menu_engines_empty) })
+      }
+    } else if (!services.canWrite()) {
       list.addView(TextView(this).apply { text = getString(R.string.menu_needs_permission) })
     } else if (entries.isEmpty()) {
       list.addView(TextView(this).apply { setText(R.string.menu_empty) })
     }
-    for (entry in entries) {
+    for (row in rows()) {
       list.addView(
         Button(this).apply {
-          text = entryText(entry)
+          text = row.label
           setTextSize(TypedValue.COMPLEX_UNIT_SP, BUTTON_TEXT_SP)
-          setOnClickListener { choose(entry) }
+          setOnClickListener { row.action() }
         },
         rowParams(),
       )
     }
-    list.addView(
-      Button(this).apply {
-        setText(R.string.menu_close)
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, BUTTON_TEXT_SP)
-        setOnClickListener { close() }
-      },
-      rowParams(),
-    )
     // The buttons share the screen, as in the menu without a screen reader, and scroll only when
     // there are too many to fit.
     return ScrollView(this).apply {
@@ -173,7 +241,8 @@ class MenuActivity : Activity() {
    * is not spoken, covers the top rows, and takes the touches meant for them.
    */
   private fun buildExploreView(): View {
-    val labels = entries.map { entryText(it) } + getString(R.string.menu_close)
+    val rows = rows()
+    val labels = rows.map { it.label }
     val menu = ExploreMenuView(
       this,
       labels,
@@ -181,11 +250,12 @@ class MenuActivity : Activity() {
         armSafeModeTimeout()
         speak(labels[row], flush = true)
       },
-      onChoose = { row ->
-        if (row < entries.size) {
-          choose(entries[row])
+      onChoose = { index ->
+        val row = rows[index]
+        if (row.announce != null) {
+          speak(row.announce, flush = true) { row.action() }
         } else {
-          speak(getString(R.string.menu_closed), flush = true) { close() }
+          row.action()
         }
       },
     )
@@ -237,6 +307,7 @@ class MenuActivity : Activity() {
         return@turnOffScreenReaders
       }
       entries = if (services.canWrite()) services.safeModeEntries() else emptyList()
+      enginePage = false
       setContentView(buildExploreView())
       val intro =
         when {

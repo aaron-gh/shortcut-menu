@@ -4,7 +4,9 @@ import android.Manifest
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Handler
@@ -21,6 +23,9 @@ data class MenuEntry(
   val on: Boolean,
   val screenReader: Boolean,
 )
+
+/** A text-to-speech engine that the menu can make the phone's default. */
+data class TtsEngine(val packageName: String, val label: String, val current: Boolean)
 
 /** Reads and changes which accessibility services are on, and which ones the menu offers. */
 class Services(private val context: Context) {
@@ -50,7 +55,7 @@ class Services(private val context: Context) {
       MenuLabels.distinct(
         infos.map { info ->
           MenuLabels.Service(
-            (if (inEnglish) englishLabel(info) else null)
+            (if (inEnglish) englishLabel(info.resolveInfo) else null)
               ?: info.resolveInfo.loadLabel(context.packageManager).toString(),
             info.resolveInfo.serviceInfo.packageName,
           )
@@ -104,6 +109,64 @@ class Services(private val context: Context) {
       }
   }
 
+  /** Whether the menu offers a choice of the phone's text-to-speech engine. */
+  fun engineMenu(): Boolean = prefs.getBoolean(KEY_ENGINE_MENU, false)
+
+  fun setEngineMenu(on: Boolean) {
+    prefs.edit().putBoolean(KEY_ENGINE_MENU, on).apply()
+  }
+
+  /**
+   * Every installed text-to-speech engine, sorted by name. With [forPico], as in safe mode, the
+   * names are in English where the engine has an English name, and an engine whose name Pico cannot
+   * read is called "Engine 1" and so on, in menu order.
+   */
+  fun engines(forPico: Boolean = false): List<TtsEngine> {
+    val default = Settings.Secure.getString(context.contentResolver, KEY_TTS_ENGINE)
+    val infos =
+      context.packageManager.queryIntentServices(Intent(ACTION_TTS_SERVICE), 0).filter {
+        it.serviceInfo != null
+      }
+    val labels =
+      MenuLabels.distinct(
+        infos.map { info ->
+          MenuLabels.Service(
+            (if (forPico) englishLabel(info) else null)
+              ?: info.loadLabel(context.packageManager).toString(),
+            info.serviceInfo.packageName,
+          )
+        }
+      )
+    var unreadable = 0
+    return infos
+      .mapIndexed { index, info ->
+        val label =
+          if (!forPico || MenuLabels.speakable(labels[index])) labels[index]
+          else null
+        Triple(info.serviceInfo.packageName, label, labels[index])
+      }
+      .sortedBy { it.third.lowercase() }
+      .map { (packageName, label, _) ->
+        TtsEngine(
+          packageName,
+          label ?: context.getString(R.string.safe_mode_engine, ++unreadable),
+          packageName == default,
+        )
+      }
+  }
+
+  /** Makes [engine] the phone's default text-to-speech engine. Returns whether it could. */
+  fun setDefaultEngine(engine: TtsEngine): Boolean {
+    if (!canWrite()) {
+      return false
+    }
+    return try {
+      Settings.Secure.putString(context.contentResolver, KEY_TTS_ENGINE, engine.packageName)
+    } catch (e: SecurityException) {
+      false
+    }
+  }
+
   /** The name of [component] in English, if it is installed and Pico can say its name. */
   fun spokenName(component: String): String? =
     installed(inEnglish = true)
@@ -115,8 +178,7 @@ class Services(private val context: Context) {
    * The name of a service in English, found the way Android finds its name in the phone's language,
    * or null if it has none of its own.
    */
-  private fun englishLabel(info: AccessibilityServiceInfo): String? {
-    val resolve = info.resolveInfo
+  private fun englishLabel(resolve: ResolveInfo): String? {
     val service = resolve.serviceInfo
     val resources = englishResources(service.packageName) ?: return null
     fun label(labelRes: Int, nonLocalized: CharSequence?): String? =
@@ -304,6 +366,10 @@ class Services(private val context: Context) {
   private companion object {
     const val PREFS = "shortcut_menu"
     const val KEY_CHOSEN = "chosen_services"
+    const val KEY_ENGINE_MENU = "engine_menu"
+    // Settings.Secure.TTS_DEFAULT_SYNTH, and the action of a text-to-speech engine's service.
+    const val KEY_TTS_ENGINE = "tts_default_synth"
+    const val ACTION_TTS_SERVICE = "android.intent.action.TTS_SERVICE"
     const val POLL_MS = 50L
     const val SETTLE_MS = 250L
     const val STOP_TIMEOUT_MS = 3000L
