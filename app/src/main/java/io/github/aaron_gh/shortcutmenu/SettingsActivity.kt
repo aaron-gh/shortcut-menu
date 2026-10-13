@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.TypedValue
+import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
@@ -19,10 +21,18 @@ import android.widget.Toast
 class SettingsActivity : Activity() {
   private lateinit var services: Services
   private lateinit var content: LinearLayout
+  private lateinit var updater: Updater
+  private lateinit var updateStatus: TextView
+  private lateinit var updateButton: Button
+  /** What the last check for an update found, kept across rebuilding the screen. */
+  private var release: Release? = null
+  private var updateStatusText = ""
+  private var updateButtonText: String? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     services = Services(this)
+    updater = Updater(this)
     val padding = dp(16)
     content =
       LinearLayout(this).apply {
@@ -102,6 +112,71 @@ class SettingsActivity : Activity() {
 
     heading(R.string.settings_try_heading)
     button(R.string.settings_try) { MenuActivity.open(this) }
+
+    heading(R.string.settings_update_heading)
+    paragraph(getString(R.string.settings_update_installed, updater.installed))
+    button(R.string.settings_update_check) { checkForUpdate() }
+    updateStatus =
+      paragraph(updateStatusText).apply {
+        accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+      }
+    updateButton = button(updateButtonText ?: "") { installUpdate() }
+    updateButton.visibility = if (release != null) View.VISIBLE else View.GONE
+  }
+
+  /** Asks GitHub for the latest release, when the user chooses to, and says what it found. */
+  private fun checkForUpdate() {
+    setUpdateStatus(getString(R.string.update_checking))
+    Thread {
+        try {
+          val latest = updater.latest()
+          runOnUiThread {
+            if (Versions.isNewer(latest.version, updater.installed)) {
+              release = latest
+              updateButtonText = getString(R.string.update_install, latest.version)
+              updateButton.text = updateButtonText
+              updateButton.visibility = View.VISIBLE
+              setUpdateStatus(getString(R.string.update_available, latest.version, latest.notes))
+            } else {
+              release = null
+              updateButton.visibility = View.GONE
+              setUpdateStatus(getString(R.string.update_current, updater.installed))
+            }
+          }
+        } catch (e: Exception) {
+          runOnUiThread { setUpdateStatus(getString(R.string.update_error, e.message.orEmpty())) }
+        }
+      }
+      .start()
+  }
+
+  /** Downloads the release that the check found, and hands it to Android to install. */
+  private fun installUpdate() {
+    val latest = release ?: return
+    if (!updater.canInstall()) {
+      setUpdateStatus(getString(R.string.update_allow))
+      startActivity(
+        Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
+      )
+      return
+    }
+    setUpdateStatus(getString(R.string.update_downloading, latest.version))
+    updateButton.isEnabled = false
+    Thread {
+        try {
+          updater.install(updater.download(latest))
+          runOnUiThread { setUpdateStatus(getString(R.string.update_confirm)) }
+        } catch (e: Exception) {
+          runOnUiThread { setUpdateStatus(getString(R.string.update_error, e.message.orEmpty())) }
+        }
+        runOnUiThread { updateButton.isEnabled = true }
+      }
+      .start()
+  }
+
+  private fun setUpdateStatus(text: String) {
+    updateStatusText = text
+    updateStatus.text = text
   }
 
   /** Says what a shortcut is assigned to, and warns when Android would ask which one to use. */
@@ -146,14 +221,16 @@ class SettingsActivity : Activity() {
     return view
   }
 
-  private fun button(text: Int, onClick: () -> Unit) {
-    content.addView(
+  private fun button(text: Int, onClick: () -> Unit): Button = button(getString(text), onClick)
+
+  private fun button(text: String, onClick: () -> Unit): Button {
+    val view =
       Button(this).apply {
-        setText(text)
+        this.text = text
         setOnClickListener { onClick() }
-      },
-      matchWidth(),
-    )
+      }
+    content.addView(view, matchWidth())
+    return view
   }
 
   private fun matchWidth() =

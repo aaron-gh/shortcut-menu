@@ -7,6 +7,10 @@
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- Checks GitHub for a new version, and downloads it, when asked in the app's main screen. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Lets the app see every accessibility service, to offer them in the menu, and every text-to-speech engine. -->
     <queries>
         <intent>
@@ -42,6 +46,10 @@
             android:showWhenLocked="true"
             android:taskAffinity=""
             android:theme="@style/MenuTheme" />
+
+        <receiver
+            android:name=".InstallResultReceiver"
+            android:exported="false" />
 
         <service
             android:name=".ShortcutMenuService"

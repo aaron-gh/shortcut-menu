@@ -60,6 +60,18 @@
     <string name="settings_choices_help">Choose which services the menu offers.</string>
     <string name="settings_engine_menu">Allow changing the default text-to-speech engine</string>
     <string name="settings_screen_reader">%1$s, screen reader</string>
+    <string name="settings_update_heading">Updates</string>
+    <string name="settings_update_installed">Version %1$s is installed.</string>
+    <string name="settings_update_check">Check for updates</string>
+    <string name="update_checking">Checking for updates.</string>
+    <string name="update_current">Version %1$s is the latest.</string>
+    <string name="update_available">Version %1$s is available.\n\n%2$s</string>
+    <string name="update_install">Download and install version %1$s</string>
+    <string name="update_downloading">Downloading version %1$s.</string>
+    <string name="update_confirm">Downloaded. Confirm the install when Android asks.</string>
+    <string name="update_allow">Allow Shortcut Menu to install apps in the next screen, go back, and choose Download and install again.</string>
+    <string name="update_error">Could not reach GitHub: %1$s</string>
+    <string name="update_failed">Update failed: %1$s</string>
     <string name="settings_try_heading">Try it</string>
     <string name="settings_try">Open the menu</string>
 </resources>
