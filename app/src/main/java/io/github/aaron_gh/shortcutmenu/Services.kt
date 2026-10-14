@@ -216,7 +216,7 @@ class Services(private val context: Context) {
 
   /** Whether any screen reader is in [components]. */
   fun hasScreenReader(components: List<String>): Boolean {
-    val readers = screenReaders().map { ServiceList.normalize(it) }.toSet()
+    val readers = allScreenReaders().map { ServiceList.normalize(it) }.toSet()
     return components.any { ServiceList.normalize(it) in readers }
   }
 
@@ -357,7 +357,17 @@ class Services(private val context: Context) {
     }
   }
 
-  private fun screenReaders(): Set<String> =
+  /**
+   * The screen readers that the menu swaps and turns off in safe mode: those the user chose for the
+   * menu. Other services that report as screen readers are never touched.
+   */
+  private fun screenReaders(): Set<String> {
+    val chosen = chosen().map { ServiceList.normalize(it) }.toSet()
+    return allScreenReaders().filter { ServiceList.normalize(it) in chosen }.toSet()
+  }
+
+  /** Every installed service that reports as a screen reader, chosen or not. */
+  private fun allScreenReaders(): Set<String> =
     accessibilityManager.installedAccessibilityServiceList
       .filter { isScreenReader(it) }
       .map { componentOf(it) }
