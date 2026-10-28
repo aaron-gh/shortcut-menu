@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Shortcut Menu</string>
+    <string name="service_description">Umożliwia włączanie i wyłączanie wybranego czytnika ekranu lub innej usługi ułatwień dostępu za pomocą skrótu ułatwień dostępu. Gdy żaden czytnik ekranu nie jest włączony, menu samo odczytuje opcje. Przesuwaj palcem po ekranie, aby je usłyszeć, i unieś palec, aby wybrać opcję. Jeśli czytnik ekranu przestanie działać, otwórz menu i naciśnij szybko trzykrotnie przycisk zwiększania głośności. Czytniki ekranu wybrane do menu zostaną wyłączone, a menu będzie odczytywane przez wbudowany syntezator.</string>
+
+    <string name="menu_title">Menu skrótów</string>
+    <string name="menu_intro">Menu skrótów. Przesuwaj palcem po ekranie, aby usłyszeć opcje. Unieś palec, aby wybrać opcję.</string>
+    <string name="menu_intro_empty">W menu skrótów nie ma żadnych usług. Wybierz je w ustawieniach aplikacji. Unieś palec, aby zamknąć menu.</string>
+    <string name="menu_intro_needs_permission">Menu skrótów nie może włączać ani wyłączać usług bez odpowiedniego uprawnienia. Sposób jego przyznania opisano w ustawieniach aplikacji. Unieś palec, aby zamknąć menu.</string>
+    <string name="menu_needs_permission">Aplikacja Shortcut Menu nie może włączać ani wyłączać usług bez odpowiedniego uprawnienia. Sposób jego przyznania opisano w ustawieniach aplikacji.</string>
+    <string name="menu_empty">Nie wybrano usług do menu. Wybierz je w ustawieniach aplikacji Shortcut Menu.</string>
+    <string name="menu_engines">Zamiana tekstu na mowę</string>
+    <string name="menu_engines_title">Mechanizm zamiany tekstu na mowę</string>
+    <string name="menu_engines_intro">Mechanizm zamiany tekstu na mowę. Przesuwaj palcem po ekranie, aby usłyszeć opcje. Unieś palec, aby wybrać opcję.</string>
+    <string name="menu_engines_empty">Nie zainstalowano żadnych mechanizmów zamiany tekstu na mowę.</string>
+    <string name="menu_back">Wstecz</string>
+    <!-- The default text-to-speech engine in the list of engines. -->
+    <string name="engine_current">%1$s, domyślny mechanizm</string>
+    <!-- Said after the menu makes an engine the default. -->
+    <string name="engine_selected">Wybrano: %1$s</string>
+    <string name="menu_close">Zamknij</string>
+    <string name="menu_closed">Zamknięto</string>
+    <!-- A service in the menu, and whether it is on. Explicit "usługa" avoids gender agreement with app names. -->
+    <string name="entry_on">%1$s, usługa włączona</string>
+    <string name="entry_off">%1$s, usługa wyłączona</string>
+    <!-- Said after the menu turns a service on or off. -->
+    <string name="turned_on">Włączono: %1$s</string>
+    <string name="turned_off">Wyłączono: %1$s</string>
+    <!-- Safe mode, which three quick presses of volume up start while the menu is open. -->
+    <string name="safe_mode">Tryb awaryjny.</string>
+    <!-- %1$s is the screen reader that safe mode turned off, or safe_mode_your_reader. -->
+    <string name="safe_mode_readers_off">Czytniki ekranu są wyłączone. Przesuwaj palcem po ekranie, aby usłyszeć opcje. Unieś palec, aby wybrać opcję. Po 30 sekundach bezczynności ponownie włączy się %1$s.</string>
+    <string name="safe_mode_readers_off_many">Czytniki ekranu są wyłączone. Przesuwaj palcem po ekranie, aby usłyszeć opcje. Unieś palec, aby wybrać opcję. Po 30 sekundach bezczynności czytniki ekranu włączą się ponownie.</string>
+    <string name="safe_mode_timed_out">Ponowne włączanie: %1$s.</string>
+    <string name="safe_mode_your_reader">twój czytnik ekranu</string>
+    <string name="safe_mode_your_readers">twoje czytniki ekranu</string>
+    <!-- In safe mode, a service whose name Pico cannot read, numbered in menu order. -->
+    <string name="safe_mode_screen_reader">Czytnik ekranu %1$d</string>
+    <string name="safe_mode_engine">Mechanizm %1$d</string>
+    <string name="safe_mode_service">Usługa %1$d</string>
+    <string name="safe_mode_intro">Przesuwaj palcem po ekranie, aby usłyszeć opcje. Unieś palec, aby wybrać opcję.</string>
+
+    <string name="settings_intro">Aplikacja Shortcut Menu pozwala włączać i wyłączać wybrane usługi ułatwień dostępu za pomocą skrótu ułatwień dostępu, np. przez przytrzymanie obu przycisków głośności. Gdy czytnik ekranu jest włączony, odczytuje listę opcji menu. Gdy żaden czytnik nie jest włączony, menu samo odczytuje opcje. Przesuwaj palcem po ekranie, aby je usłyszeć, i unieś palec, aby wybrać opcję. Włączenie jednego czytnika ekranu wyłącza pozostałe czytniki wybrane do menu. Jeśli czytnik ekranu lub synteza mowy w telefonie przestanie działać, otwórz menu i naciśnij szybko trzykrotnie przycisk zwiększania głośności, aby uruchomić tryb awaryjny. Tryb ten wyłącza czytniki ekranu wybrane do menu i odczytuje opcje przez wbudowany syntezator, aby umożliwić ponowne włączenie czytnika.</string>
+    <string name="settings_permission_heading">Uprawnienie</string>
+    <string name="settings_permission_granted">Uprawnienie przyznane. Aplikacja Shortcut Menu może włączać i wyłączać usługi.</string>
+    <string name="settings_permission_needed">Włączanie i wyłączanie usług ułatwień dostępu w Androidzie wymaga specjalnego uprawnienia. Wystarczy przyznać je raz, za pomocą adb na komputerze lub aplikacji Shizuku. Wykonaj polecenie:</string>
+    <string name="settings_copy_command">Skopiuj polecenie</string>
+    <string name="settings_copied">Skopiowano</string>
+    <string name="settings_shortcut_heading">Skrót</string>
+    <string name="settings_shortcut_help">W ustawieniach ułatwień dostępu wybierz Shortcut Menu i włącz skrót tej aplikacji. Przypisz do tego skrótu tylko Shortcut Menu. Jeśli przypiszesz więcej funkcji, Android zapyta, której użyć. Bez włączonego czytnika ekranu pytanie nie zostanie odczytane.</string>
+    <string name="settings_question_skipped">Zapisano już potwierdzenie użycia skrótu z przyciskami głośności. Skrót działa od razu, bez pytania przy pierwszym użyciu.</string>
+    <string name="settings_volume_keys">Skrót z przyciskami głośności</string>
+    <string name="settings_button">Przycisk ułatwień dostępu</string>
+    <string name="settings_shortcut_unused">%1$s: brak przypisanych funkcji.</string>
+    <string name="settings_shortcut_ready">%1$s: przypisano tylko Shortcut Menu. Skrót jest gotowy do użycia.</string>
+    <string name="settings_shortcut_shared">%1$s: przypisano kilka funkcji, więc Android zapyta, której użyć: %2$s.</string>
+    <string name="settings_shortcut_other">%1$s: przypisano inne funkcje, bez Shortcut Menu: %2$s.</string>
+    <string name="settings_open_accessibility">Otwórz ustawienia ułatwień dostępu</string>
+    <string name="settings_choices_heading">Usługi w menu</string>
+    <string name="settings_choices_help">Wybierz usługi, które mają być dostępne w menu.</string>
+    <string name="settings_engine_menu">Pokazuj w menu wybór domyślnego mechanizmu zamiany tekstu na mowę</string>
+    <string name="settings_screen_reader">%1$s, czytnik ekranu</string>
+    <string name="settings_update_heading">Aktualizacje</string>
+    <string name="settings_update_installed">Zainstalowana wersja: %1$s.</string>
+    <string name="settings_update_check">Sprawdź dostępność aktualizacji</string>
+    <string name="update_checking">Sprawdzanie dostępności aktualizacji.</string>
+    <string name="update_current">Wersja %1$s jest najnowsza.</string>
+    <string name="update_available">Dostępna jest wersja %1$s.\n\n%2$s</string>
+    <string name="update_install">Pobierz i zainstaluj wersję %1$s</string>
+    <string name="update_downloading">Pobieranie wersji %1$s.</string>
+    <string name="update_confirm">Pobrano aktualizację. Potwierdź instalację, gdy Android o to poprosi.</string>
+    <string name="update_allow">Na następnym ekranie zezwól aplikacji Shortcut Menu na instalowanie aplikacji. Następnie wróć i ponownie wybierz pobieranie i instalację aktualizacji.</string>
+    <string name="update_error">Nie udało się połączyć z serwisem GitHub: %1$s</string>
+    <string name="update_failed">Aktualizacja nie powiodła się: %1$s</string>
+    <string name="settings_try_heading">Wypróbuj</string>
+    <string name="settings_try">Otwórz menu</string>
+</resources>
